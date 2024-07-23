@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список Дел</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        .container {
+            width: 500px;
+            margin: 0 auto;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .task-item {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        button {
+            padding: 5px 10px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        .delete-button {
+            background-color: #f44336;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <h1>Список Дел</h1>
+        <div id="task-list"></div>
+
+        <h2>Добавить Дело</h2>
+        <form id="new-task-form">
+            <input type="text" id="new-task-input" placeholder="Введите новое дело">
+            <button type="submit">Добавить</button>
+        </form>
+    </div>
+
+    <script>
+        const taskList = document.getElementById('task-list');
+        const newTaskForm = document.getElementById('new-task-form');
+        const newTaskInput = document.getElementById('new-task-input');
+        // / Загрузка данных с сервера
+        // Функция для обновления списка дел
+        function updateTaskList() {
+            fetch('http://localhost:8000/')
+                .then(response => response.json())
+                .then(data => {
+                    taskList.innerHTML = '';
+                    data.tasks.forEach(task => {
+                        const taskItem = document.createElement('li');
+                        taskItem.classList.add('task-item');
+                        taskItem.textContent = task.task;
+
+                        const actions = document.createElement('div');
+                        actions.classList.add('actions');
+
+                        // Кнопка изменения
+                        const editButton = document.createElement('button');
+                        editButton.textContent = 'Изменить';
+                        editButton.addEventListener('click', () => {
+                            // Реализовать функционал изменения дела
+                            console.log("Изменить дело: ", task.id);
+                        });
+                        actions.appendChild(editButton);
+
+                        // Кнопка удаления
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Удалить';
+                        deleteButton.classList.add('delete-button');
+
+                        deleteButton.addEventListener('click', () => {
+                            // Удаляем дело из массива и обновляем список
+                            const taskIndex = tasksData.tasks.findIndex(t => t.id === task.id);
+                            if (taskIndex !== -1) {
+                                tasksData.tasks.splice(taskIndex, 1);
+                                updateTaskList();
+                            }
+                        });
+
+                        actions.appendChild(deleteButton);
+
+                        taskItem.appendChild(actions);
+                        taskList.appendChild(taskItem);
+                    });
+                })
+                .catch(error => console.error('Ошибка при загрузке данных:', error));
+        }
+
+        // Обработчик отправки формы добавления нового дела
+        newTaskForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const newTaskText = newTaskInput.value;
+            if (newTaskText.trim() !== '') {
+                fetch('http://localhost:8000/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ task: newTaskText })
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            throw new Error('Ошибка при добавлении дела');
+                        }
+                    })
+                    .then(data => {
+                        updateTaskList();
+                        newTaskInput.value = '';
+                    })
+                    .catch(error => console.error('Ошибка:', error));
+            }
+        });
+
+        // Загрузка списка дел при загрузке страницы
+        updateTaskList();
+    </script>
+</body>
+
+</html>
